@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ClinicCare – My Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:       #2bbfaa;
+      --teal-dark:  #1a9e8c;
+      --teal-light: #e6f9f6;
+      --navy:       #1a2332;
+      --navy-mid:   #243040;
+      --navy-light: #2e3d52;
+      --white:      #ffffff;
+      --bg:         #f4f7fa;
+      --text:       #1a2332;
+      --muted:      #8896a8;
+      --border:     #e8edf3;
+      --green:      #22c55e;
+      --sidebar-w:  220px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ─── SIDEBAR ─────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 20px 18px;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.2px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--teal);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .nav-section {
+      padding: 18px 12px 6px;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.55);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .nav-item.active { background: var(--teal); color: #fff; }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .user-chip {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--teal);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .avatar.sm { width: 28px; height: 28px; font-size: 10px; }
+    .user-info .name { font-size: 13px; font-weight: 600; color: #fff; }
+    .user-info .role { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+    /* ─── MAIN ────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── TOPBAR ──────────────────────────────── */
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .page-title h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .page-title p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .bell-btn {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: transparent;
+      color: var(--muted);
+    }
+    .bell-btn:hover { background: var(--bg); }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    /* ─── CONTENT ─────────────────────────────── */
+    .content {
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+    }
+    .col-left { display: flex; flex-direction: column; gap: 20px; }
+    .col-right { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ─── HERO BANNER ─────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #1fa896 0%, #2bbfaa 40%, #3ad4be 100%);
+      border-radius: 14px;
+      padding: 26px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      right: -40px; top: -40px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: 40px; bottom: -60px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+    .hero-text .greet { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 1px; }
+    .hero-text h2 { font-size: 26px; font-weight: 700; color: #fff; margin: 4px 0 6px; letter-spacing: -0.5px; }
+    .hero-text p  { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+    .hero-actions { display: flex; gap: 10px; z-index: 1; }
+    .hero-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      transition: transform 0.15s;
+    }
+    .hero-btn:hover { transform: translateY(-1px); }
+    .hero-btn-outline { background: rgba(255,255,255,0.18); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+    .hero-btn-solid  { background: #fff; color: var(--teal-dark); }
+
+    /* ─── STAT CARDS ──────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 18px 16px;
+    }
+    .stat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+    .stat-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+    .icon-teal  { background: var(--teal-light); color: var(--teal-dark); }
+    .icon-blue  { background: #e8f0fe; color: #4285f4; }
+    .icon-purple{ background: #f0eafd; color: #8b5cf6; }
+    .icon-amber { background: #fff8e6; color: #f59e0b; }
+
+    .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
+    .stat-sub { font-size: 12px; color: var(--muted); }
+    .stat-sub .up { color: var(--green); font-weight: 600; }
+
+    /* ─── APPOINTMENTS TABLE ──────────────────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-head h3 { font-size: 15px; font-weight: 700; }
+    .view-all { font-size: 13px; color: var(--teal-dark); font-weight: 600; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 3px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      padding: 10px 20px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafbfc; }
+    tbody td { padding: 13px 20px; font-size: 13.5px; vertical-align: middle; }
+
+    .doc-cell { display: flex; align-items: center; gap: 10px; }
+    .doc-info .doc-name { font-weight: 600; font-size: 13.5px; }
+    .doc-info .doc-spec { font-size: 11.5px; color: var(--muted); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .action-btn {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      transition: background 0.12s;
+    }
+    .action-btn:hover { background: var(--bg); }
+    .action-btn.cancel { color: #ef4444; border-color: #fecaca; }
+    .action-btn.cancel:hover { background: #fff5f5; }
+
+    /* ─── RIGHT PANEL ─────────────────────────── */
+    .upcoming-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .upcoming-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .upcoming-head h3 { font-size: 14px; font-weight: 700; }
+    .details-link { font-size: 12.5px; color: var(--teal-dark); font-weight: 600; cursor: pointer; }
+
+    .appt-block {
+      margin: 14px;
+      background: linear-gradient(135deg, #1fa896, #2bbfaa);
+      border-radius: 10px;
+      padding: 14px;
+      color: #fff;
+    }
+    .appt-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.75; margin-bottom: 10px; }
+    .appt-doc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .appt-doc-row .avatar { background: rgba(255,255,255,0.25); font-size: 11px; }
+    .appt-doc-name { font-size: 14px; font-weight: 700; }
+    .appt-doc-spec  { font-size: 11px; opacity: 0.8; }
+    .appt-meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .appt-meta-item { background: rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 10px; }
+    .appt-meta-item .lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.7; margin-bottom: 3px; }
+    .appt-meta-item .val { font-size: 13px; font-weight: 700; }
+
+    .appt-actions { display: flex; gap: 8px; padding: 0 14px 14px; }
+    .appt-btn {
+      flex: 1;
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .appt-btn-primary { background: var(--teal); color: #fff; }
+    .appt-btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    /* ─── QUICK ACTIONS ───────────────────────── */
+    .quick-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .quick-head { padding: 16px 18px 10px; font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); }
+    .quick-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .quick-item:last-child { border-bottom: none; }
+    .quick-item:hover { background: var(--bg); }
+    .quick-icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .quick-text .qt { font-size: 13px; font-weight: 600; }
+    .quick-text .qs { font-size: 11.5px; color: var(--muted); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d0dae5; border-radius: 10px; }
+
+    /* ─── EMERGENCY QUICK HELP (additive) ─────────────────── */
+    .btn-emergency {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1.5px solid #fecaca;
+      background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
+      color: #b91c1c;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .btn-emergency:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(185,28,28,0.12); }
+    .btn-emergency svg { flex-shrink: 0; }
+
+    .emergency-fab {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      color: #fff;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      box-shadow: 0 8px 28px rgba(185,28,28,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .emergency-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(185,28,28,0.5); }
+    .emergency-fab .fab-short { display: none; }
+    @media (max-width: 720px) {
+      .emergency-fab .fab-label { display: none; }
+      .emergency-fab .fab-short { display: inline; }
+      .emergency-fab { padding: 14px; border-radius: 50%; }
+    }
+
+    .emergency-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(26,35,50,0.45);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 32px;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .emergency-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+    .emergency-panel {
+      width: 100%;
+      max-width: 520px;
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+      max-height: min(90vh, 720px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(12px);
+      transition: transform 0.22s ease-out;
+    }
+    .emergency-overlay.is-open .emergency-panel { transform: translateY(0); }
+
+    .emergency-panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #fef2f2, #fff);
+      border-bottom: 1px solid #fecaca;
+    }
+    .emergency-panel-head h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #991b1b;
+      letter-spacing: -0.3px;
+    }
+    .emergency-panel-head p { font-size: 12px; color: #64748b; margin-top: 4px; line-height: 1.45; }
+    .emergency-close {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .emergency-close:hover { background: var(--bg); color: var(--text); }
+
+    .emergency-body { overflow-y: auto; padding: 0 0 16px; }
+
+    .emergency-banner {
+      margin: 16px 20px 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      font-size: 12.5px;
+      color: #9a3412;
+      line-height: 1.5;
+    }
+
+    .emergency-section { margin: 18px 20px 0; }
+    .emergency-section h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .emergency-list { display: flex; flex-direction: column; gap: 8px; }
+    .emergency-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fafbfc;
+    }
+    .emergency-card strong { font-size: 13px; color: var(--text); display: block; margin-bottom: 4px; }
+    .emergency-card .sub { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .emergency-card .row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .emergency-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--teal-dark);
+      text-decoration: none;
+    }
+    .emergency-link:hover { text-decoration: underline; }
+    .emergency-pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .emergency-pill.muted { background: #f1f5f9; color: #64748b; }
+
+    .emergency-doctor {
+      border: 1.5px solid var(--teal);
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: var(--teal-light);
+    }
+    .emergency-doctor .doc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .emergency-doctor .doc-row .avatar {
+      width: 40px; height: 40px;
+      font-size: 13px;
+    }
+    .emergency-doctor .doc-name { font-size: 15px; font-weight: 700; }
+    .emergency-doctor .doc-spec { font-size: 12px; color: var(--muted); }
+    .emergency-doctor .note { font-size: 11.5px; color: #0f766e; margin-top: 8px; line-height: 1.45; }
+    .btn-book-urgent {
+      margin-top: 12px;
+      width: 100%;
+      padding: 11px;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--teal);
+      color: #fff;
+    }
+    .btn-book-urgent:hover { opacity: 0.92; }
+    .btn-book-urgent:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .emergency-loading { padding: 24px 20px; text-align: center; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🏥</div>
+    ClinicCare
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Patient Menu</div>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Book Appointment
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      My Appointments
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Symptom Checker
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Health Assistant
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Find Doctors
+    </a>
+  </div>
+
+  <div class="nav-section" style="margin-top:10px;">
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      My Profile
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">AT</div>
+      <div class="user-info">
+        <div class="name">Abrar Tasin</div>
+        <div class="role">Patient</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════ MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="page-title">
+      <h1>My Dashboard</h1>
+      <p>Monday, March 9, 2026</p>
+    </div>
+    <div class="topbar-right">
+      <button type="button" class="btn-emergency" id="emergencyOpenTopbar" title="Emergency help — hospitals, hotlines, fast booking">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        Emergency
+      </button>
+      <button class="bell-btn" title="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="btn btn-primary">+ New Booking</button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-left">
+
+      <!-- HERO -->
+      <div class="hero">
+        <div class="hero-text">
+          <div class="greet">Good Morning</div>
+          <h2>Abrar Tasin 👋</h2>
+          <p>You have 1 upcoming appointment this week.</p>
+        </div>
+        <div class="hero-actions">
+          <button class="hero-btn hero-btn-outline">+ Book Appointment</button>
+          <button class="hero-btn hero-btn-solid">Check Symptoms</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-head">
+            <div class="stat-label">Total Appointments</div>
+            <div class="stat-icon icon-teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">8</div>
+          <div class="stat-sub"><span class="up">↑ 2 this month</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <div class="stat-label">Upcoming</div>
+            <div class="stat-icon icon-blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">1</div>
+          <div class="stat-sub">This week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <div class="stat-label">Doctors Visited</div>
+            <div class="stat-icon icon-purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub">Across 3 departments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <div class="stat-label">Symptom Checks</div>
+            <div class="stat-icon icon-amber">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">3</div>
+          <div class="stat-sub">AI-assisted checks</div>
+        </div>
+      </div>
+
+      <!-- APPOINTMENTS TABLE -->
+      <div class="card" id="appointmentsSection">
+        <div class="card-head">
+          <h3>My Appointments</h3>
+          <a class="view-all" href="#">View All →</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Doctor</th>
+              <th>Date &amp; Time</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" style="text-align:center;color:#8896a8;">Loading appointments...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-right">
+
+      <!-- UPCOMING APPOINTMENT -->
+      <div class="upcoming-card">
+        <div class="upcoming-head">
+          <h3>Upcoming Appointment</h3>
+          <span class="details-link">Details →</span>
+        </div>
+        <div class="appt-block">
+          <div class="appt-label">Next Visit</div>
+          <div class="appt-doc-row">
+            <div class="avatar">AR</div>
+            <div>
+              <div class="appt-doc-name">Dr. Ahmed Rahman</div>
+              <div class="appt-doc-spec">General Medicine</div>
+            </div>
+          </div>
+          <div class="appt-meta">
+            <div class="appt-meta-item">
+              <div class="lbl">Date</div>
+              <div class="val">Mar 12</div>
+            </div>
+            <div class="appt-meta-item">
+              <div class="lbl">Time</div>
+              <div class="val">10:00 AM</div>
+            </div>
+            <div class="appt-meta-item">
+              <div class="lbl">Duration</div>
+              <div class="val">30 min</div>
+            </div>
+          </div>
+        </div>
+        <div class="appt-actions">
+          <button class="appt-btn appt-btn-primary">Reschedule</button>
+          <button class="appt-btn appt-btn-outline">Cancel</button>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="quick-card">
+        <div class="quick-head">Quick Actions</div>
+        <div class="quick-item">
+          <div class="quick-icon icon-teal">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="quick-text">
+            <div class="qt">Book New Appointment</div>
+            <div class="qs">Find available slots</div>
+          </div>
+        </div>
+        <div class="quick-item">
+          <div class="quick-icon" style="background:#e6f9f6; color:#1a9e8c;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="quick-text">
+            <div class="qt">Check Symptoms</div>
+            <div class="qs">AI-powered recommendation</div>
+          </div>
+        </div>
+        <div class="quick-item">
+          <div class="quick-icon" style="background:#f0eafd; color:#8b5cf6;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="quick-text">
+            <div class="qt">Browse Doctors</div>
+            <div class="qs">View availability &amp; profiles</div>
+          </div>
+        </div>
+        <div class="quick-item">
+          <div class="quick-icon" style="background:#ecfeff; color:#0f766e;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="quick-text">
+            <div class="qt">Health Risk Assessment</div>
+            <div class="qs">AI trend analysis from your history</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<button type="button" class="emergency-fab" id="emergencyOpenFab" title="Emergency quick help" aria-label="Open emergency help">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span class="fab-label">Emergency help</span>
+  <span class="fab-short" aria-hidden="true">SOS</span>
+</button>
+
+<div class="emergency-overlay" id="emergencyOverlay" aria-hidden="true">
+  <div class="emergency-panel" role="dialog" aria-modal="true" aria-labelledby="emergencyPanelTitle">
+    <div class="emergency-panel-head">
+      <div>
+        <h2 id="emergencyPanelTitle">Emergency &amp; urgent care</h2>
+        <p>Hospitals, hotlines, and the fastest path to book a clinician. Not a substitute for calling emergency services.</p>
+      </div>
+      <button type="button" class="emergency-close" id="emergencyCloseBtn" aria-label="Close emergency panel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="emergency-body" id="emergencyBody">
+      <div class="emergency-loading" id="emergencyLoading">Loading resources…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const API_BASE = "http://localhost:3000/api";
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        return response;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    const routeMap = {
+      "homepage.html": "homepage.html",
+      "appointment_page.html": "appointment_page.html",
+      "symptom-checker.html": "symptom-checker.html",
+      "health-guidance-chat.html": "health-guidance-chat.html",
+      "doctors.html": "doctors.html",
+      "signin.html": "signin.html"
+    };
+
+    function go(target) {
+      window.location.href = routeMap[target] || target;
+    }
+
+    const EMERGENCY_FALLBACK = {
+      disclaimer:
+        "For life-threatening emergencies, call your national emergency number immediately. This panel is a demo directory only.",
+      emergency_contacts: [
+        { label: "National emergency", phone: "999", note: "Use the official number for your region." },
+        { label: "ClinicCare demo line", phone: "+880-1711-000000", note: "Placeholder — start the backend for live data." },
+      ],
+      hospitals: [
+        {
+          name: "Sample ER — Central Hospital (offline data)",
+          address: "Enable Flask to load the full hospital list.",
+          phone: "+880-2-00000000",
+          open_24h: true,
+          maps_query: "Dhaka hospital emergency",
+        },
+      ],
+      nearest_available_doctor: null,
+    };
+
+    const emergencyOverlay = document.getElementById("emergencyOverlay");
+    const emergencyBody = document.getElementById("emergencyBody");
+    let emergencyCache = null;
+
+    function mapsUrl(query) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "hospital")}`;
+    }
+
+    function openEmergencyPanel() {
+      emergencyOverlay.classList.add("is-open");
+      emergencyOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      if (emergencyCache) {
+        renderEmergencyPanel(emergencyCache);
+        return;
+      }
+      emergencyBody.innerHTML = '<div class="emergency-loading">Loading resources…</div>';
+      fetchWithTimeout(`${API_BASE}/emergency-resources`, {}, 5000)
+        .then((res) => (res.ok ? res.json() : Promise.reject()))
+        .then((data) => {
+          emergencyCache = data;
+          renderEmergencyPanel(data);
+        })
+        .catch(() => {
+          renderEmergencyPanel(EMERGENCY_FALLBACK);
+        });
+    }
+
+    function closeEmergencyPanel() {
+      emergencyOverlay.classList.remove("is-open");
+      emergencyOverlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function renderEmergencyPanel(data) {
+      const contacts = (data.emergency_contacts || [])
+        .map(
+          (c) => `
+        <div class="emergency-card">
+          <strong>${escapeEmergencyHtml(c.label)}</strong>
+          <div class="sub">${escapeEmergencyHtml(c.note || "")}</div>
+          <div class="row-actions">
+            <a class="emergency-link" href="tel:${String(c.phone).replace(/\s/g, "")}">Call ${escapeEmergencyHtml(String(c.phone))}</a>
+          </div>
+        </div>`
+        )
+        .join("");
+
+      const hospitals = (data.hospitals || [])
+        .map((h) => {
+          const pill = h.open_24h
+            ? '<span class="emergency-pill">24/7 ER</span>'
+            : '<span class="emergency-pill muted">Check hours</span>';
+          return `
+        <div class="emergency-card">
+          <strong>${escapeEmergencyHtml(h.name)}</strong> ${pill}
+          <div class="sub">${escapeEmergencyHtml(h.address || "")}</div>
+          <div class="row-actions">
+            <a class="emergency-link" href="tel:${String(h.phone || "").replace(/\s/g, "")}">Call hospital</a>
+            <a class="emergency-link" href="${mapsUrl(h.maps_query || h.name)}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
+          </div>
+        </div>`;
+        })
+        .join("");
+
+      const doc = data.nearest_available_doctor;
+      let doctorBlock = "";
+      if (doc && doc.name) {
+        const initials = initialsFromName(doc.name);
+        doctorBlock = `
+        <div class="emergency-section">
+          <h3>Fast appointment — available clinician</h3>
+          <div class="emergency-doctor">
+            <div class="doc-row">
+              <div class="avatar">${initials}</div>
+              <div>
+                <div class="doc-name">${escapeEmergencyHtml(doc.name)}</div>
+                <div class="doc-spec">${escapeEmergencyHtml(doc.department || "")} · ⭐ ${Number(doc.rating || 0).toFixed(1)}</div>
+              </div>
+            </div>
+            <div class="note">${escapeEmergencyHtml(doc.availability_note || "")}</div>
+            <button type="button" class="btn-book-urgent" id="emergencyBookBtn">Book with this doctor</button>
+          </div>
+        </div>`;
+      } else {
+        doctorBlock = `
+        <div class="emergency-section">
+          <h3>Fast appointment</h3>
+          <div class="emergency-card">
+            <strong>No doctor record available</strong>
+            <div class="sub">Start the Flask backend and ensure the doctors table is seeded, or use Book Appointment to pick manually.</div>
+            <div class="row-actions">
+              <a class="emergency-link" href="#" id="emergencyGoBook">Go to booking</a>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      emergencyBody.innerHTML = `
+        <div class="emergency-banner">${escapeEmergencyHtml(data.disclaimer || EMERGENCY_FALLBACK.disclaimer)}</div>
+        <div class="emergency-section">
+          <h3>Emergency contacts</h3>
+          <div class="emergency-list">${contacts || "<div class='emergency-card'><div class='sub'>No contacts listed.</div></div>"}</div>
+        </div>
+        <div class="emergency-section">
+          <h3>Hospitals &amp; ER (demo directory)</h3>
+          <div class="emergency-list">${hospitals || "<div class='emergency-card'><div class='sub'>No hospitals listed.</div></div>"}</div>
+        </div>
+        ${doctorBlock}
+      `;
+
+      const bookBtn = document.getElementById("emergencyBookBtn");
+      if (bookBtn && doc) {
+        bookBtn.addEventListener("click", function () {
+          localStorage.setItem("selectedDepartment", doc.department || "");
+          localStorage.setItem("selectedDoctorName", doc.name || "");
+          closeEmergencyPanel();
+          go("appointment_page.html");
+        });
+      }
+      const goBook = document.getElementById("emergencyGoBook");
+      if (goBook) {
+        goBook.addEventListener("click", function (e) {
+          e.preventDefault();
+          closeEmergencyPanel();
+          go("appointment_page.html");
+        });
+      }
+    }
+
+    function escapeEmergencyHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s == null ? "" : String(s);
+      return d.innerHTML;
+    }
+
+    document.getElementById("emergencyOpenTopbar").addEventListener("click", openEmergencyPanel);
+    document.getElementById("emergencyOpenFab").addEventListener("click", openEmergencyPanel);
+    document.getElementById("emergencyCloseBtn").addEventListener("click", closeEmergencyPanel);
+    emergencyOverlay.addEventListener("click", function (e) {
+      if (e.target === emergencyOverlay) closeEmergencyPanel();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && emergencyOverlay.classList.contains("is-open")) closeEmergencyPanel();
+    });
+
+    const navItems = Array.from(document.querySelectorAll(".sidebar .nav-item"));
+    navItems.forEach((item) => {
+      const text = (item.textContent || "").toLowerCase();
+      item.addEventListener("click", function (e) {
+        if (text.includes("dashboard")) {
+          e.preventDefault();
+          return;
+        }
+        if (text.includes("book")) {
+          e.preventDefault();
+          go("appointment_page.html");
+        } else if (text.includes("symptom")) {
+          e.preventDefault();
+          go("symptom-checker.html");
+        } else if (text.includes("health assistant")) {
+          e.preventDefault();
+          go("health-guidance-chat.html");
+        } else if (text.includes("find doctors")) {
+          e.preventDefault();
+          go("doctors.html");
+        } else if (text.includes("profile") || text.includes("settings")) {
+          e.preventDefault();
+          alert("This section is not included in this demo.");
+        }
+      });
+    });
+
+    document.querySelector(".btn.btn-primary").addEventListener("click", function () {
+      go("appointment_page.html");
+    });
+    document.querySelector(".hero-btn-outline").addEventListener("click", function () {
+      go("appointment_page.html");
+    });
+    document.querySelector(".hero-btn-solid").addEventListener("click", function () {
+      go("symptom-checker.html");
+    });
+
+    document.querySelectorAll(".quick-item").forEach((item) => {
+      const text = (item.textContent || "").toLowerCase();
+      item.addEventListener("click", function () {
+        if (text.includes("book")) go("appointment_page.html");
+        else if (text.includes("symptom")) go("symptom-checker.html");
+        else if (text.includes("doctor")) go("doctors.html");
+        else if (text.includes("risk")) {
+          const card = document.getElementById("riskCard");
+          if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+
+    document.querySelector(".card tbody").addEventListener("click", function (event) {
+      const btn = event.target.closest(".action-btn");
+      if (!btn) return;
+      const label = (btn.textContent || "").trim().toLowerCase();
+      if (label.includes("rebook")) {
+        go("appointment_page.html");
+      } else if (label.includes("cancel")) {
+        const appointmentId = btn.getAttribute("data-appointment-id");
+        if (!appointmentId) return;
+        cancelAppointment(appointmentId);
+      } else {
+        alert("Appointment action recorded.");
+      }
+    });
+
+    document.querySelector(".appt-btn-primary").addEventListener("click", function () {
+      go("appointment_page.html");
+    });
+    document.querySelector(".appt-btn-outline").addEventListener("click", function () {
+      alert("Appointment cancellation request recorded.");
+    });
+
+    document.querySelector(".user-chip").addEventListener("click", function () {
+      go("signin.html");
+    });
+
+    async function loadRiskAssessment() {
+      const colRight = document.querySelector(".col-right");
+      const riskCard = document.createElement("div");
+      riskCard.className = "quick-card";
+      riskCard.id = "riskCard";
+      riskCard.innerHTML = `
+        <div class="quick-head">AI Health Risk Assessment</div>
+        <div style="padding:14px 16px;font-size:13px;color:#64748b;">Analyzing your symptom checks and appointment history...</div>
+      `;
+      colRight.appendChild(riskCard);
+
+      try {
+        const res = await fetchWithTimeout(`${API_BASE}/risk-assessment?userId=1`, {}, 5000);
+        if (!res.ok) throw new Error("Failed risk request");
+        const data = await res.json();
+        const color = data.risk_level === "High" ? "#dc2626" : data.risk_level === "Medium" ? "#d97706" : "#16a34a";
+
+        riskCard.innerHTML = `
+          <div class="quick-head">AI Health Risk Assessment</div>
+          <div style="padding:14px 16px;border-bottom:1px solid #e8edf3;">
+            <div style="font-size:11px;color:#8896a8;text-transform:uppercase;font-weight:700;letter-spacing:.06em;">Current Risk</div>
+            <div style="font-size:24px;font-weight:700;color:${color};margin-top:3px;">${data.risk_level}</div>
+            <div style="font-size:12px;color:#64748b;">Score: ${data.risk_score}/100</div>
+          </div>
+          <div style="padding:12px 16px;">
+            ${data.insights.map((x) => `<div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:8px;">• ${x}</div>`).join("")}
+          </div>
+        `;
+      } catch (_err) {
+        riskCard.innerHTML = `
+          <div class="quick-head">AI Health Risk Assessment</div>
+          <div style="padding:14px 16px;font-size:13px;color:#64748b;">Backend offline. Start Flask server with <strong>pip install -r requirements.txt && python backend/app.py</strong>.</div>
+        `;
+      }
+    }
+
+    function formatDateTime(dateIso, time) {
+      const dt = new Date(dateIso);
+      const month = dt.toLocaleString("en-US", { month: "short" });
+      return `${month} ${dt.getDate()} · ${time}`;
+    }
+
+    function initialsFromName(name) {
+      return (name || "")
+        .replace("Dr.", "")
+        .trim()
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((x) => x[0]?.toUpperCase() || "")
+        .join("");
+    }
+
+    function statusBadge(status) {
+      const s = (status || "").toLowerCase();
+      if (s === "upcoming" || s === "confirmed") {
+        return `<span class="badge badge-green"><span class="badge-dot"></span>Confirmed</span>`;
+      }
+      if (s === "cancelled" || s === "canceled") {
+        return `<span class="badge badge-red">Cancelled</span>`;
+      }
+      return `<span class="badge badge-gray">Completed</span>`;
+    }
+
+    async function cancelAppointment(appointmentId) {
+      try {
+        const res = await fetchWithTimeout(`${API_BASE}/appointments/cancel`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: 1, appointmentId: Number(appointmentId) })
+        }, 5000);
+        if (!res.ok) throw new Error("cancel failed");
+        await loadMyAppointments();
+        alert("Appointment cancelled successfully.");
+      } catch (_err) {
+        alert("Could not cancel appointment. Please ensure Flask backend is running.");
+      }
+    }
+
+    async function loadMyAppointments() {
+      const tbody = document.querySelector(".card tbody");
+      try {
+        const res = await fetchWithTimeout(`${API_BASE}/my-appointments?userId=1`, {}, 5000);
+        if (!res.ok) throw new Error("failed");
+        const data = await res.json();
+        const rows = data.appointments || [];
+        if (!rows.length) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#8896a8;">No appointments found yet.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = rows.map((row) => `
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="avatar sm" style="background:#2bbfaa;">${initialsFromName(row.doctor_name)}</div>
+                <div class="doc-info">
+                  <div class="doc-name">${row.doctor_name}</div>
+                  <div class="doc-spec">${row.department}</div>
+                </div>
+              </div>
+            </td>
+            <td>${formatDateTime(row.appointment_date, row.appointment_time)}</td>
+            <td>${row.reason || "General check-up"}</td>
+            <td>${statusBadge(row.status)}</td>
+            <td><button class="action-btn ${String(row.status || "").toLowerCase() === "upcoming" ? "cancel" : ""}" data-appointment-id="${row.id}">${String(row.status || "").toLowerCase() === "upcoming" ? "Cancel" : "Rebook"}</button></td>
+          </tr>
+        `).join("");
+      } catch (_err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#8896a8;">Could not load appointments. Ensure Flask backend is running.</td></tr>`;
+      }
+    }
+
+    loadRiskAssessment();
+    loadMyAppointments();
+
+    if (window.location.hash === "#appointments") {
+      setTimeout(() => {
+        const section = document.getElementById("appointmentsSection");
+        if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 250);
+    }
+  })();
+</script>
+</body>
+</html>

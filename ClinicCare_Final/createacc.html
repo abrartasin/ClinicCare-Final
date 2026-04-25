@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ClinicCare – Create Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal-dark:   #0a7a6a;
+      --teal:        #0d9b85;
+      --teal-mid:    #12b49b;
+      --teal-light:  #3ecfb8;
+      --teal-pale:   #e6f7f5;
+      --teal-bg:     #d0f1ec;
+      --white:       #ffffff;
+      --off-white:   #f5f8f7;
+      --border:      #dde8e6;
+      --text-dark:   #1a2e2a;
+      --text-mid:    #4a6b65;
+      --text-muted:  #8aaba5;
+      --danger:      #e55c5c;
+      --radius-sm:   8px;
+      --radius-md:   14px;
+      --radius-lg:   20px;
+      --shadow-card: 0 8px 40px rgba(10,122,106,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--off-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 68px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text-dark);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: var(--teal);
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .nav-link {
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-link:hover { color: var(--teal); }
+
+    /* ─── MAIN ─── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    /* ─── CARD WRAPPER ─── */
+    .card-wrapper {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── LEFT PANEL ─── */
+    .left-panel {
+      width: 310px;
+      flex-shrink: 0;
+      background: linear-gradient(160deg, var(--teal-mid) 0%, var(--teal-dark) 100%);
+      padding: 44px 32px 36px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      bottom: -60px; right: -60px;
+    }
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      top: 30px; right: 20px;
+    }
+    .left-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .left-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      line-height: 1.2;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+    .left-desc {
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.72);
+      margin-bottom: 32px;
+    }
+    .role-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .role-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      backdrop-filter: blur(4px);
+      transition: background .2s;
+    }
+    .role-item:hover { background: rgba(255,255,255,0.2); }
+    .role-item-icon {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .role-item-icon svg { color: white; }
+    .role-item-name { font-size: 0.88rem; font-weight: 600; color: white; }
+    .role-item-sub  { font-size: 0.73rem; color: rgba(255,255,255,0.6); }
+    .left-signin {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.65);
+    }
+    .left-signin a {
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .left-signin a:hover { text-decoration: underline; }
+
+    /* ─── RIGHT PANEL ─── */
+    .right-panel {
+      flex: 1;
+      background: var(--white);
+      padding: 40px 44px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-heading h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .form-heading p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ─── PROGRESS BAR ─── */
+    .progress-bar {
+      display: flex;
+      gap: 6px;
+      margin: 20px 0;
+    }
+    .progress-bar span {
+      flex: 1;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--border);
+    }
+    .progress-bar span.active  { background: var(--teal); }
+    .progress-bar span.done   { background: var(--teal-mid); }
+
+    /* ─── ROLE SELECTOR ─── */
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .role-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .role-card:hover {
+      border-color: var(--teal-light);
+      box-shadow: 0 0 0 3px rgba(62,207,184,0.12);
+    }
+    .role-card.selected {
+      border-color: var(--teal);
+      background: var(--teal-pale);
+      box-shadow: 0 0 0 3px rgba(13,155,133,0.1);
+    }
+    .role-card-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--teal-bg);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      color: var(--teal);
+    }
+    .role-card.selected .role-card-icon {
+      background: var(--teal);
+      color: white;
+    }
+    .role-card-label { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
+    .role-card-sub   { font-size: 0.73rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ─── FORM FIELDS ─── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .field-row.full { grid-template-columns: 1fr; }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+    }
+    .input-wrap { position: relative; }
+    .input-wrap input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text-dark);
+      background: var(--off-white);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .input-wrap input::placeholder { color: var(--text-muted); }
+    .input-wrap input:focus {
+      border-color: var(--teal);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(13,155,133,0.1);
+    }
+    .input-wrap .eye-btn {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0;
+      line-height: 1;
+      transition: color .2s;
+    }
+    .input-wrap .eye-btn:hover { color: var(--teal); }
+
+    /* password strength */
+    .strength-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .strength-bars {
+      display: flex; gap: 4px;
+    }
+    .strength-bars span {
+      width: 28px; height: 3px;
+      border-radius: 3px;
+      background: var(--border);
+    }
+    .strength-bars span.filled { background: var(--teal-mid); }
+    .strength-bars span.filled.weak  { background: #f0a500; }
+    .strength-text { font-size: 0.73rem; color: var(--text-muted); }
+
+    /* ─── CHECKBOX ─── */
+    .agree-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 18px 0;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      line-height: 1.5;
+    }
+    .agree-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--teal);
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    .agree-row a { color: var(--teal); text-decoration: none; font-weight: 500; }
+    .agree-row a:hover { text-decoration: underline; }
+
+    /* ─── SUBMIT BTN ─── */
+    .btn-create {
+      width: 100%;
+      padding: 14px;
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 16px rgba(13,155,133,0.3);
+    }
+    .btn-create:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(13,155,133,0.4);
+    }
+    .btn-create:active { transform: translateY(0); }
+
+    .signin-hint {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+    .signin-hint a { color: var(--teal); font-weight: 600; text-decoration: none; }
+    .signin-hint a:hover { text-decoration: underline; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 780px) {
+      .left-panel { display: none; }
+      .right-panel { padding: 32px 24px; }
+      .card-wrapper { max-width: 480px; }
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+      .role-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a href="#" class="logo">
+      <span class="logo-icon">✚</span>
+      ClinicCare
+    </a>
+    <a href="#" class="nav-link">Sign In Instead</a>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+    <div class="card-wrapper">
+
+      <!-- LEFT PANEL -->
+      <div class="left-panel">
+        <p class="left-label">Join ClinicCare</p>
+        <h1 class="left-title">Create your free account today</h1>
+        <p class="left-desc">Choose your role and get access to appointments, AI symptom checking, and smart scheduling.</p>
+        <div class="role-list">
+          <div class="role-item">
+            <div class="role-item-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="role-item-info">
+              <div class="role-item-name">Patient</div>
+              <div class="role-item-sub">Book &amp; manage appointments</div>
+            </div>
+          </div>
+          <div class="role-item">
+            <div class="role-item-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div class="role-item-info">
+              <div class="role-item-name">Clinic Staff</div>
+              <div class="role-item-sub">Manage schedules &amp; bookings</div>
+            </div>
+          </div>
+          <div class="role-item">
+            <div class="role-item-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div class="role-item-info">
+              <div class="role-item-name">Doctor</div>
+              <div class="role-item-sub">View daily appointment list</div>
+            </div>
+          </div>
+        </div>
+        <p class="left-signin">Already registered? <a href="#">Sign in here →</a></p>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+        <div class="form-heading">
+          <h2>Create Account</h2>
+          <p>Fill in your details to get started</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+          <span class="done"></span>
+          <span class="active"></span>
+          <span></span>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-grid">
+          <div class="role-card selected" onclick="selectRole(this)">
+            <div class="role-card-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div>
+              <div class="role-card-label">Patient</div>
+              <div class="role-card-sub">Book appointments</div>
+            </div>
+          </div>
+          <div class="role-card" onclick="selectRole(this)">
+            <div class="role-card-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div>
+              <div class="role-card-label">Clinic Staff</div>
+              <div class="role-card-sub">Manage schedules</div>
+            </div>
+          </div>
+          <div class="role-card" onclick="selectRole(this)">
+            <div class="role-card-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div>
+              <div class="role-card-label">Doctor</div>
+              <div class="role-card-sub">View daily list</div>
+            </div>
+          </div>
+          <div class="role-card" onclick="selectRole(this)">
+            <div class="role-card-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M9 9h1v6H9M14 9h1v6h-1"/></svg>
+            </div>
+            <div>
+              <div class="role-card-label">Administrator</div>
+              <div class="role-card-sub">System management</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <div class="field-row">
+          <div class="field-group">
+            <label>First Name</label>
+            <div class="input-wrap">
+              <input type="text" placeholder="Abrar" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Last Name</label>
+            <div class="input-wrap">
+              <input type="text" placeholder="Tasin" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row full" style="margin-bottom:14px">
+          <div class="field-group">
+            <label>Email Address</label>
+            <div class="input-wrap">
+              <input type="email" placeholder="you@example.com" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Phone Number</label>
+            <div class="input-wrap">
+              <input type="tel" placeholder="+880 1XXX XXXXXX" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Date of Birth</label>
+            <div class="input-wrap">
+              <input type="date" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Password</label>
+            <div class="input-wrap">
+              <input type="password" id="pwd" placeholder="Min. 8 characters" oninput="checkStrength(this.value)" />
+              <button class="eye-btn" onclick="togglePwd('pwd', this)" type="button">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="strength-row">
+              <div class="strength-bars" id="strengthBars">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <span class="strength-text" id="strengthText">–</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Confirm Password</label>
+            <div class="input-wrap">
+              <input type="password" id="cpwd" placeholder="Re-enter password" />
+              <button class="eye-btn" onclick="togglePwd('cpwd', this)" type="button">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agree -->
+        <label class="agree-row">
+          <input type="checkbox" checked />
+          I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. My health data will be stored securely per clinic data guidelines.
+        </label>
+
+        <!-- Submit -->
+        <button class="btn-create" type="button">
+          Create Account
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+
+        <p class="signin-hint">Already have an account? <a href="#">Sign in</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const routeMap = {
+      "index.html": "homepage.html",
+      "home.html": "homepage.html",
+      "create-account.html": "createacc.html",
+      "signin.html": "signin.html"
+    };
+
+    function selectRole(el) {
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function togglePwd(id, btn) {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function checkStrength(val) {
+      const bars = document.querySelectorAll('#strengthBars span');
+      const txt  = document.getElementById('strengthText');
+      bars.forEach(b => { b.className = ''; });
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const labels = ['', 'Weak', 'Fair', 'Medium strength', 'Strong'];
+      const classes = ['', 'filled weak', 'filled weak', 'filled', 'filled'];
+      for (let i = 0; i < score; i++) {
+        bars[i].className = classes[score] || 'filled';
+      }
+      txt.textContent = score > 0 ? labels[score] : '–';
+    }
+
+    function go(target) {
+      window.location.href = routeMap[target] || target;
+    }
+
+    document.querySelectorAll("a[href]").forEach((a) => {
+      const href = (a.getAttribute("href") || "").trim();
+      const key = href.replace(/^\.\//, "").toLowerCase();
+      if (routeMap[key]) {
+        a.setAttribute("href", routeMap[key]);
+      }
+    });
+
+    document.querySelectorAll("a[href='#']").forEach((a) => {
+      const text = (a.textContent || "").toLowerCase();
+      if (text.includes("sign in")) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          go("signin.html");
+        });
+      }
+      if (text.includes("terms") || text.includes("privacy")) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          alert("Policy page is not included in this project.");
+        });
+      }
+    });
+
+    document.querySelector(".btn-create").addEventListener("click", function () {
+      const required = Array.from(document.querySelectorAll("input[type='text'], input[type='email'], input[type='tel'], input[type='date']"));
+      const password = document.getElementById("pwd");
+      const confirmPassword = document.getElementById("cpwd");
+
+      const missing = required.some((input) => !input.value.trim());
+      if (missing) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+      if (password.value.length < 8) {
+        alert("Password must be at least 8 characters.");
+        password.focus();
+        return;
+      }
+      if (password.value !== confirmPassword.value) {
+        alert("Passwords do not match.");
+        confirmPassword.focus();
+        return;
+      }
+
+      alert("Account created successfully. Please sign in.");
+      go("signin.html");
+    });
+  </script>
+</body>
+</html>
