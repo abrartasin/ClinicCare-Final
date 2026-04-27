@@ -386,7 +386,7 @@
     const ANALYSIS_STORAGE_KEY = "cliniccareLatestSymptomAnalysis";
     let latestAnalysis = null;
     let analyzeRequestVersion = 0;
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -608,7 +608,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
-        }, 5000);
+        }, 35000);
         if (!res.ok) throw new Error("Analysis request failed.");
         const data = await res.json();
         if (currentVersion !== analyzeRequestVersion) return;

@@ -862,7 +862,7 @@
 <script>
   (function () {
     const API_BASE = "https://tasin-gcgt.onrender.com/api";
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -921,7 +921,7 @@
         return;
       }
       emergencyBody.innerHTML = '<div class="emergency-loading">Loading resources…</div>';
-      fetchWithTimeout(`${API_BASE}/emergency-resources`, {}, 5000)
+      fetchWithTimeout(`${API_BASE}/emergency-resources`, {}, 35000)
         .then((res) => (res.ok ? res.json() : Promise.reject()))
         .then((data) => {
           emergencyCache = data;
@@ -1138,7 +1138,7 @@
       colRight.appendChild(riskCard);
 
       try {
-        const res = await fetchWithTimeout(`${API_BASE}/risk-assessment?userId=1`, {}, 5000);
+        const res = await fetchWithTimeout(`${API_BASE}/risk-assessment?userId=1`, {}, 35000);
         if (!res.ok) throw new Error("Failed risk request");
         const data = await res.json();
         const color = data.risk_level === "High" ? "#dc2626" : data.risk_level === "Medium" ? "#d97706" : "#16a34a";
@@ -1196,7 +1196,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: 1, appointmentId: Number(appointmentId) })
-        }, 5000);
+        }, 35000);
         if (!res.ok) throw new Error("cancel failed");
         await loadMyAppointments();
         alert("Appointment cancelled successfully.");
@@ -1208,7 +1208,7 @@
     async function loadMyAppointments() {
       const tbody = document.querySelector(".card tbody");
       try {
-        const res = await fetchWithTimeout(`${API_BASE}/my-appointments?userId=1`, {}, 5000);
+        const res = await fetchWithTimeout(`${API_BASE}/my-appointments?userId=1`, {}, 35000);
         if (!res.ok) throw new Error("failed");
         const data = await res.json();
         const rows = data.appointments || [];
@@ -1234,7 +1234,7 @@
           </tr>
         `).join("");
       } catch (_err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#8896a8;">Could not load appointments. Ensure Flask backend is running.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#8896a8;">Server is starting up — please wait 30 seconds and refresh the page.</td></tr>`;
       }
     }
 

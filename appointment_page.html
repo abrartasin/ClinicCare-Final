@@ -526,7 +526,7 @@
 
 <script>
   const API_BASE = "https://tasin-gcgt.onrender.com/api";
-  async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -641,7 +641,7 @@
   async function loadSmartSlots() {
     const grid = document.getElementById("smartSlotGrid");
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/smart-slots?userId=1`, {}, 5000);
+      const res = await fetchWithTimeout(`${API_BASE}/smart-slots?userId=1`, {}, 35000);
       if (!res.ok) throw new Error("No slot data");
       const data = await res.json();
       grid.innerHTML = data.suggestions.map((s) => `
@@ -704,7 +704,7 @@
           time: document.getElementById("summaryTime").textContent,
           reason: document.getElementById("reason").value.trim() || "General check-up"
         })
-      }, 5000);
+      }, 35000);
     } catch (_err) {
       // Continue UI flow in frontend-only mode.
     }
