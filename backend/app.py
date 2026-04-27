@@ -1,21 +1,25 @@
 import json
 import os
 import re
-import sqlite3
 from datetime import datetime, timedelta
+
+import psycopg2
+import psycopg2.extras
 from flask import Flask, jsonify, request, send_from_directory
 
 BASE_DIR = os.path.dirname(__file__)
 FRONTEND_DIR = os.path.join(BASE_DIR, "..")
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DATA_DIR, "cliniccare.db")
+
+_db_url = os.environ.get("DATABASE_URL", "")
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = _db_url
 
 app = Flask(__name__)
 
 
 def db_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
     return conn
 
 
@@ -118,14 +122,13 @@ def infer_condition_and_department(symptoms, severity):
 
 
 def init_db():
-    os.makedirs(DATA_DIR, exist_ok=True)
     conn = db_conn()
     cur = conn.cursor()
 
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS doctors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             department TEXT NOT NULL,
             experience INTEGER NOT NULL,
@@ -139,7 +142,7 @@ def init_db():
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS appointments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             doctor_name TEXT NOT NULL,
             department TEXT NOT NULL,
@@ -154,7 +157,7 @@ def init_db():
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS symptom_checks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             symptoms_json TEXT NOT NULL,
             severity TEXT NOT NULL,
@@ -169,7 +172,7 @@ def init_db():
     cur.execute("SELECT COUNT(*) AS count FROM doctors")
     if cur.fetchone()["count"] == 0:
         cur.executemany(
-            "INSERT INTO doctors (name, department, experience, rating, reviews, available_today, tags) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO doctors (name, department, experience, rating, reviews, available_today, tags) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             [(d["name"], d["dept"], d["exp"], d["rating"], d["reviews"], d["available"], d["tags"]) for d in DOCTORS_SEED],
         )
 
@@ -184,7 +187,7 @@ def init_db():
             (1, "Dr. Ahmed Rahman", "General Medicine", "2026-04-02", "10:00 AM", "Morning", "upcoming", "General check-up"),
         ]
         cur.executemany(
-            "INSERT INTO appointments (user_id, doctor_name, department, appointment_date, appointment_time, time_of_day, status, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO appointments (user_id, doctor_name, department, appointment_date, appointment_time, time_of_day, status, reason) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
             seed_appointments,
         )
 
@@ -196,7 +199,7 @@ def init_db():
             (1, json.dumps(["Headache", "Dizziness"]), "Moderate", "1–3 Days", "Migraine Pattern", "Neurology"),
         ]
         cur.executemany(
-            "INSERT INTO symptom_checks (user_id, symptoms_json, severity, duration, predicted_condition, recommended_department) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO symptom_checks (user_id, symptoms_json, severity, duration, predicted_condition, recommended_department) VALUES (%s, %s, %s, %s, %s, %s)",
             checks,
         )
 
@@ -228,7 +231,7 @@ def analyze_symptoms():
         conn = db_conn()
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, name, department, experience, rating, reviews, available_today, tags FROM doctors WHERE department = ?",
+            "SELECT id, name, department, experience, rating, reviews, available_today, tags FROM doctors WHERE department = %s",
             (department,),
         )
         docs = [dict(r) for r in cur.fetchall()]
@@ -239,11 +242,11 @@ def analyze_symptoms():
         ranked = sorted(enriched, key=lambda x: x["match_score"], reverse=True)[:4]
 
         cur.execute(
-            "INSERT INTO symptom_checks (user_id, symptoms_json, severity, duration, predicted_condition, recommended_department) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO symptom_checks (user_id, symptoms_json, severity, duration, predicted_condition, recommended_department) VALUES (%s, %s, %s, %s, %s, %s)",
             (user_id, json.dumps(symptoms), severity, duration, condition, department),
         )
         cur.execute(
-            "SELECT department, COUNT(*) AS count FROM doctors WHERE department != ? GROUP BY department ORDER BY count DESC LIMIT 2",
+            "SELECT department, COUNT(*) AS count FROM doctors WHERE department != %s GROUP BY department ORDER BY count DESC LIMIT 2",
             (department,),
         )
         alternatives_raw = cur.fetchall()
@@ -296,7 +299,7 @@ def smart_slots():
         conn = db_conn()
         cur = conn.cursor()
         cur.execute(
-            "SELECT time_of_day, appointment_time FROM appointments WHERE user_id = ? ORDER BY appointment_date DESC",
+            "SELECT time_of_day, appointment_time FROM appointments WHERE user_id = %s ORDER BY appointment_date DESC",
             (user_id,),
         )
         history = [dict(r) for r in cur.fetchall()]
@@ -357,7 +360,7 @@ def create_appointment():
         conn = db_conn()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO appointments (user_id, doctor_name, department, appointment_date, appointment_time, time_of_day, status, reason) VALUES (?, ?, ?, ?, ?, ?, 'upcoming', ?)",
+            "INSERT INTO appointments (user_id, doctor_name, department, appointment_date, appointment_time, time_of_day, status, reason) VALUES (%s, %s, %s, %s, %s, %s, 'upcoming', %s)",
             (user_id, doctor_name, department, date_iso, time_value, time_of_day, reason),
         )
         conn.commit()
@@ -378,7 +381,7 @@ def my_appointments():
             """
             SELECT id, doctor_name, department, appointment_date, appointment_time, status, reason
             FROM appointments
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY appointment_date DESC, id DESC
             LIMIT 25
             """,
@@ -404,7 +407,7 @@ def cancel_appointment():
         conn = db_conn()
         cur = conn.cursor()
         cur.execute(
-            "UPDATE appointments SET status = 'cancelled' WHERE id = ? AND user_id = ?",
+            "UPDATE appointments SET status = 'cancelled' WHERE id = %s AND user_id = %s",
             (int(appointment_id), user_id),
         )
         conn.commit()
@@ -424,10 +427,10 @@ def risk_assessment():
         user_id = int(request.args.get("userId", 1))
         conn = db_conn()
         cur = conn.cursor()
-        cur.execute("SELECT department, status FROM appointments WHERE user_id = ?", (user_id,))
+        cur.execute("SELECT department, status FROM appointments WHERE user_id = %s", (user_id,))
         appointments = [dict(r) for r in cur.fetchall()]
         cur.execute(
-            "SELECT symptoms_json, recommended_department FROM symptom_checks WHERE user_id = ? ORDER BY created_at DESC LIMIT 20",
+            "SELECT symptoms_json, recommended_department FROM symptom_checks WHERE user_id = %s ORDER BY created_at DESC LIMIT 20",
             (user_id,),
         )
         checks = [dict(r) for r in cur.fetchall()]
@@ -495,7 +498,7 @@ def risk_assessment():
 
 # Demo emergency directory (replace with real integrations / geolocation in production).
 EMERGENCY_CONTACTS = [
-    {"label": "National emergency hotline", "phone": "999", "note": "Life-threatening emergencies — use your country’s official number if different."},
+    {"label": "National emergency hotline", "phone": "999", "note": "Life-threatening emergencies — use your country's official number if different."},
     {"label": "ClinicCare 24/7 nurse line (demo)", "phone": "+880-1711-000000", "note": "Triage & facility routing — demo number."},
     {"label": "Mental health crisis line (demo)", "phone": "16263", "note": "Example helpline; verify locally."},
 ]
@@ -704,7 +707,7 @@ def health_chat_reply(user_message: str) -> dict:
 
     if any(k in t for k in ["hello", "hi ", "hey", "thanks", "thank you"]):
         return {
-            "reply": "Hello — I am ClinicCare’s rule-based health guidance assistant. Ask about departments, common symptoms, or booking. I am not a doctor and cannot diagnose.",
+            "reply": "Hello — I am ClinicCare's rule-based health guidance assistant. Ask about departments, common symptoms, or booking. I am not a doctor and cannot diagnose.",
             "topic": "greeting",
             "suggestions": suggestions_default,
         }
