@@ -382,7 +382,12 @@
       "signin.html": "signin.html"
     };
 
-    const API_BASE = "https://tasin-gcgt.onrender.com/api";
+    const API_BASE = (() => {
+      if (window.location.protocol === 'file:') return 'http://localhost:3000/api';
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (isLocalhost && window.location.port !== '3000') return 'http://localhost:3000/api';
+      return '/api';
+    })();
     const ANALYSIS_STORAGE_KEY = "cliniccareLatestSymptomAnalysis";
     let latestAnalysis = null;
     let analyzeRequestVersion = 0;
@@ -615,7 +620,7 @@
         renderAnalysis(data, selectedSymptoms);
       } catch (_err) {
         if (currentVersion === analyzeRequestVersion) {
-          alert("Backend not running. Start Flask server with: pip install -r requirements.txt && python backend/app.py");
+          alert("Could not reach the server. It may be starting up — please wait 30 seconds and try again.");
         }
       } finally {
         if (currentVersion === analyzeRequestVersion) {

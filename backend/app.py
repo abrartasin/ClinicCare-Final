@@ -2,9 +2,6 @@ import json
 import os
 import re
 from datetime import datetime, timedelta
-
-import psycopg2
-import psycopg2.extras
 from flask import Flask, jsonify, request, send_from_directory
 
 BASE_DIR = os.path.dirname(__file__)
@@ -14,13 +11,68 @@ _db_url = os.environ.get("DATABASE_URL", "")
 if _db_url.startswith("postgres://"):
     _db_url = _db_url.replace("postgres://", "postgresql://", 1)
 DATABASE_URL = _db_url
+USE_POSTGRES = bool(DATABASE_URL)
 
-app = Flask(__name__)
+if USE_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
+else:
+    import sqlite3
+    DATA_DIR = os.path.join(BASE_DIR, "data")
+    DB_PATH = os.path.join(DATA_DIR, "cliniccare_dev.db")
+
+
+# ---------------------------------------------------------------------------
+# SQLite compatibility shim — makes sqlite3 behave like psycopg2 RealDictCursor
+# so all route code is identical regardless of which DB is in use.
+# ---------------------------------------------------------------------------
+class _SQLiteCursor:
+    def __init__(self, cur):
+        self._c = cur
+
+    def execute(self, sql, params=()):
+        self._c.execute(sql.replace("%s", "?"), params)
+        return self
+
+    def executemany(self, sql, seq):
+        self._c.executemany(sql.replace("%s", "?"), seq)
+
+    def fetchone(self):
+        row = self._c.fetchone()
+        return dict(row) if row else None
+
+    def fetchall(self):
+        return [dict(r) for r in self._c.fetchall()]
+
+    @property
+    def rowcount(self):
+        return self._c.rowcount
+
+
+class _SQLiteConn:
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cursor(self):
+        return _SQLiteCursor(self._conn.cursor())
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
 
 
 def db_conn():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
-    return conn
+    if USE_POSTGRES:
+        return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return _SQLiteConn(conn)
+
+
+app = Flask(__name__)
 
 
 @app.after_request
@@ -65,7 +117,6 @@ DOCTORS_SEED = [
 
 
 def score_doctor_breakdown(doc, symptom_text):
-    """Returns total match_score plus transparent breakdown for AI doctor explanation."""
     tags = (doc["tags"] or "").lower()
     text = symptom_text.lower()
     words = [x for x in text.split() if x]
@@ -122,13 +173,14 @@ def infer_condition_and_department(symptoms, severity):
 
 
 def init_db():
+    PK = "SERIAL PRIMARY KEY" if USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
     conn = db_conn()
     cur = conn.cursor()
 
     cur.execute(
-        """
+        f"""
         CREATE TABLE IF NOT EXISTS doctors (
-            id SERIAL PRIMARY KEY,
+            id {PK},
             name TEXT NOT NULL,
             department TEXT NOT NULL,
             experience INTEGER NOT NULL,
@@ -140,9 +192,9 @@ def init_db():
         """
     )
     cur.execute(
-        """
+        f"""
         CREATE TABLE IF NOT EXISTS appointments (
-            id SERIAL PRIMARY KEY,
+            id {PK},
             user_id INTEGER NOT NULL,
             doctor_name TEXT NOT NULL,
             department TEXT NOT NULL,
@@ -155,9 +207,9 @@ def init_db():
         """
     )
     cur.execute(
-        """
+        f"""
         CREATE TABLE IF NOT EXISTS symptom_checks (
-            id SERIAL PRIMARY KEY,
+            id {PK},
             user_id INTEGER NOT NULL,
             symptoms_json TEXT NOT NULL,
             severity TEXT NOT NULL,
@@ -496,7 +548,6 @@ def risk_assessment():
         return jsonify({"error": "Failed to build risk assessment.", "detail": str(exc)}), 500
 
 
-# Demo emergency directory (replace with real integrations / geolocation in production).
 EMERGENCY_CONTACTS = [
     {"label": "National emergency hotline", "phone": "999", "note": "Life-threatening emergencies — use your country's official number if different."},
     {"label": "ClinicCare 24/7 nurse line (demo)", "phone": "+880-1711-000000", "note": "Triage & facility routing — demo number."},
@@ -504,32 +555,13 @@ EMERGENCY_CONTACTS = [
 ]
 
 EMERGENCY_HOSPITALS = [
-    {
-        "name": "ClinicCare Emergency & Trauma Center (demo)",
-        "address": "Dhaka Medical Zone, Plot 12 (sample address)",
-        "phone": "+880-2-00000000",
-        "open_24h": True,
-        "maps_query": "Dhaka Medical College Hospital",
-    },
-    {
-        "name": "City General Hospital ER (demo)",
-        "address": "Central City, Ring Road (sample)",
-        "phone": "+880-2-11111111",
-        "open_24h": True,
-        "maps_query": "Square Hospitals Dhaka",
-    },
-    {
-        "name": "Women & Children Emergency Wing (demo)",
-        "address": "Pediatric district, Block C (sample)",
-        "phone": "+880-2-22222222",
-        "open_24h": False,
-        "maps_query": "Bangladesh Shishu Hospital",
-    },
+    {"name": "ClinicCare Emergency & Trauma Center (demo)", "address": "Dhaka Medical Zone, Plot 12 (sample address)", "phone": "+880-2-00000000", "open_24h": True, "maps_query": "Dhaka Medical College Hospital"},
+    {"name": "City General Hospital ER (demo)", "address": "Central City, Ring Road (sample)", "phone": "+880-2-11111111", "open_24h": True, "maps_query": "Square Hospitals Dhaka"},
+    {"name": "Women & Children Emergency Wing (demo)", "address": "Pediatric district, Block C (sample)", "phone": "+880-2-22222222", "open_24h": False, "maps_query": "Bangladesh Shishu Hospital"},
 ]
 
 
 def pick_nearest_available_doctor():
-    """Without GPS, 'nearest available' = highest-rated doctor flagged available today, then best fallback."""
     conn = db_conn()
     cur = conn.cursor()
     cur.execute(
@@ -544,9 +576,7 @@ def pick_nearest_available_doctor():
     row = cur.fetchone()
     if row:
         conn.close()
-        d = dict(row)
-        return {**d, "availability_note": "Same-day availability flag on file — book to confirm a slot."}
-
+        return {**dict(row), "availability_note": "Same-day availability flag on file — book to confirm a slot."}
     cur.execute(
         """
         SELECT id, name, department, experience, rating, reviews, available_today
@@ -559,11 +589,7 @@ def pick_nearest_available_doctor():
     conn.close()
     if not row2:
         return None
-    d2 = dict(row2)
-    return {
-        **d2,
-        "availability_note": "No same-day flag in directory; showing top-rated doctor for fast booking — call ER for urgent care.",
-    }
+    return {**dict(row2), "availability_note": "No same-day flag in directory; showing top-rated doctor for fast booking — call ER for urgent care."}
 
 
 @app.get("/api/emergency-resources")
@@ -589,9 +615,6 @@ def _norm_chat(text: str) -> str:
 
 
 def health_chat_reply(user_message: str) -> dict:
-    """
-    Simple rule-based health guidance (not a diagnosis). Returns reply + topic + follow-up chips.
-    """
     t = _norm_chat(user_message)
     suggestions_default = [
         "Which department should I visit for chest pain?",
@@ -600,123 +623,48 @@ def health_chat_reply(user_message: str) -> dict:
     ]
 
     if not t:
-        return {
-            "reply": "Ask a short question in plain English — for example which department fits your symptoms, or self-care tips for common issues.",
-            "topic": "empty",
-            "suggestions": suggestions_default,
-        }
+        return {"reply": "Ask a short question in plain English — for example which department fits your symptoms, or self-care tips for common issues.", "topic": "empty", "suggestions": suggestions_default}
 
-    # Emergency / red flags (rule-based triage language only)
-    if any(
-        k in t
-        for k in [
-            "can't breathe",
-            "cannot breathe",
-            "choking",
-            "unconscious",
-            "severe bleeding",
-            "stroke",
-            "suicide",
-            "kill myself",
-        ]
-    ):
-        return {
-            "reply": "That can be an emergency. Call your national emergency number right away (for example 999 or your local equivalent) or go to the nearest ER. This chat cannot assess urgency — use official emergency services.",
-            "topic": "emergency",
-            "suggestions": ["Where is the emergency panel in the app?", "How do I book a routine visit?"],
-        }
+    if any(k in t for k in ["can't breathe", "cannot breathe", "choking", "unconscious", "severe bleeding", "stroke", "suicide", "kill myself"]):
+        return {"reply": "That can be an emergency. Call your national emergency number right away (for example 999 or your local equivalent) or go to the nearest ER. This chat cannot assess urgency — use official emergency services.", "topic": "emergency", "suggestions": ["Where is the emergency panel in the app?", "How do I book a routine visit?"]}
 
     if "department" in t or "which specialist" in t or "which doctor" in t or "where should i go" in t:
-        return {
-            "reply": "ClinicCare routes by symptom: heart/chest pressure → Cardiology; headaches, dizziness, numbness → Neurology; ear/nose/throat → ENT; bones/joints/back → Orthopedics; children → Pediatrics; otherwise start with General Medicine. For a structured check, use the Symptom Checker — this assistant only gives quick rules of thumb.",
-            "topic": "departments",
-            "suggestions": ["I have a headache — which department?", "What about fever in a child?"],
-        }
+        return {"reply": "ClinicCare routes by symptom: heart/chest pressure → Cardiology; headaches, dizziness, numbness → Neurology; ear/nose/throat → ENT; bones/joints/back → Orthopedics; children → Pediatrics; otherwise start with General Medicine.", "topic": "departments", "suggestions": ["I have a headache — which department?", "What about fever in a child?"]}
 
     if "fever" in t:
-        return {
-            "reply": "For fever: rest, fluids, and monitor temperature. Seek same-day care if fever is very high, lasts several days, you have breathing difficulty, confusion, stiff neck, or severe pain. Adults often start with General Medicine; infants and young children → Pediatrics. This is general guidance, not a diagnosis.",
-            "topic": "fever",
-            "suggestions": ["When should I worry about fever?", "Book an appointment"],
-        }
+        return {"reply": "For fever: rest, fluids, and monitor temperature. Seek same-day care if fever is very high, lasts several days, you have breathing difficulty, confusion, stiff neck, or severe pain. Adults often start with General Medicine; infants and young children → Pediatrics.", "topic": "fever", "suggestions": ["When should I worry about fever?", "Book an appointment"]}
 
-    if any(k in t for k in ["cold", "flu", "cough", "runny nose", "sore throat"]) and not any(
-        k in t for k in ["chest pain", "heart"]
-    ):
-        return {
-            "reply": "Colds and mild respiratory symptoms often fit General Medicine or ENT if it is mainly throat/sinus. Rest, hydration, and isolation if contagious. See a clinician if breathing is hard, symptoms worsen fast, or you have high-risk conditions.",
-            "topic": "respiratory",
-            "suggestions": ["Sore throat for days — who to see?", "Chest pain with cough"],
-        }
+    if any(k in t for k in ["cold", "flu", "cough", "runny nose", "sore throat"]) and not any(k in t for k in ["chest pain", "heart"]):
+        return {"reply": "Colds and mild respiratory symptoms often fit General Medicine or ENT if it is mainly throat/sinus. Rest, hydration, and isolation if contagious.", "topic": "respiratory", "suggestions": ["Sore throat for days — who to see?", "Chest pain with cough"]}
 
     if any(k in t for k in ["chest pain", "heart palpitation", "palpitation", "shortness of breath", "short of breath"]):
-        return {
-            "reply": "New or severe chest pain, pain into the arm/jaw, or trouble breathing needs urgent medical assessment — call emergency services if symptoms are severe. For stable, mild patterns scheduled care, Cardiology or General Medicine may apply. Do not rely on this chat for cardiac risk.",
-            "topic": "cardiac",
-            "suggestions": ["Which department for check-ups?", "What is the Symptom Checker?"],
-        }
+        return {"reply": "New or severe chest pain, pain into the arm/jaw, or trouble breathing needs urgent medical assessment — call emergency services if symptoms are severe.", "topic": "cardiac", "suggestions": ["Which department for check-ups?", "What is the Symptom Checker?"]}
 
     if any(k in t for k in ["headache", "migraine", "dizziness", "numbness", "seizure"]):
-        return {
-            "reply": "Persistent or sudden severe headache, weakness on one side, trouble speaking, or seizures need urgent evaluation. For routine headaches or neurological concerns, Neurology is common. When in doubt, seek in-person care.",
-            "topic": "neuro",
-            "suggestions": ["Fever with headache", "Book Neurology"],
-        }
+        return {"reply": "Persistent or sudden severe headache, weakness on one side, trouble speaking, or seizures need urgent evaluation. For routine headaches or neurological concerns, Neurology is common.", "topic": "neuro", "suggestions": ["Fever with headache", "Book Neurology"]}
 
     if any(k in t for k in ["stomach", "nausea", "vomit", "diarrhea", "abdomen", "abdominal"]):
-        return {
-            "reply": "Mild stomach upset: hydrate and monitor. See a clinician for severe pain, blood in stool/vomit, dehydration signs, or pain that worsens. General Medicine or GI specialists per your facility — this assistant cannot diagnose.",
-            "topic": "gi",
-            "suggestions": ["Food poisoning symptoms", "Which department for stomach pain?"],
-        }
+        return {"reply": "Mild stomach upset: hydrate and monitor. See a clinician for severe pain, blood in stool/vomit, dehydration signs, or pain that worsens.", "topic": "gi", "suggestions": ["Food poisoning symptoms", "Which department for stomach pain?"]}
 
     if any(k in t for k in ["joint", "knee", "back pain", "fracture", "bone", "orthopedic"]):
-        return {
-            "reply": "Joint or musculoskeletal issues are often seen in Orthopedics; sudden injury with deformity or inability to bear weight may need urgent care or ER. Minor strains may be managed with primary care follow-up.",
-            "topic": "ortho",
-            "suggestions": ["Sports injury — who to see?", "Back pain for weeks"],
-        }
+        return {"reply": "Joint or musculoskeletal issues are often seen in Orthopedics; sudden injury with deformity or inability to bear weight may need urgent care or ER.", "topic": "ortho", "suggestions": ["Sports injury — who to see?", "Back pain for weeks"]}
 
     if any(k in t for k in ["ear", "nose", "throat", "sinus", "hearing"]):
-        return {
-            "reply": "Ear, nose, and throat symptoms usually map to ENT. Severe throat swelling or breathing problems are emergencies — call emergency services.",
-            "topic": "ent",
-            "suggestions": ["Sinus infection", "Sore throat only"],
-        }
+        return {"reply": "Ear, nose, and throat symptoms usually map to ENT. Severe throat swelling or breathing problems are emergencies — call emergency services.", "topic": "ent", "suggestions": ["Sinus infection", "Sore throat only"]}
 
     if re.search(r"\b(baby|babies|child|children|infant|toddler|kids?|pediatric)\b", t):
-        return {
-            "reply": "For children, Pediatrics is the usual first stop for fever, cough, and routine concerns. Seek urgent care if the child is lethargic, breathing hard, dehydrated, or you are worried — trust your instincts.",
-            "topic": "peds",
-            "suggestions": ["Fever in a baby", "Child ear pain"],
-        }
+        return {"reply": "For children, Pediatrics is the usual first stop for fever, cough, and routine concerns. Seek urgent care if the child is lethargic, breathing hard, dehydrated, or you are worried.", "topic": "peds", "suggestions": ["Fever in a baby", "Child ear pain"]}
 
     if any(k in t for k in ["book", "appointment", "schedule", "slot"]):
-        return {
-            "reply": "Use Book Appointment on the dashboard or menu to pick a department, doctor, and time. The Symptom Checker can suggest a department first if you are unsure.",
-            "topic": "booking",
-            "suggestions": ["Which department for fever?", "Open symptom checker"],
-        }
+        return {"reply": "Use Book Appointment on the dashboard or menu to pick a department, doctor, and time. The Symptom Checker can suggest a department first if you are unsure.", "topic": "booking", "suggestions": ["Which department for fever?", "Open symptom checker"]}
 
     if any(k in t for k in ["symptom checker", "analyze symptom"]):
-        return {
-            "reply": "The Symptom Checker asks for your symptoms and suggests a likely department and doctors — it is more detailed than this quick chat. This assistant only answers short FAQs.",
-            "topic": "symptom_checker",
-            "suggestions": ["Which department should I visit?", "What should I do for fever?"],
-        }
+        return {"reply": "The Symptom Checker asks for your symptoms and suggests a likely department and doctors — it is more detailed than this quick chat.", "topic": "symptom_checker", "suggestions": ["Which department should I visit?", "What should I do for fever?"]}
 
     if any(k in t for k in ["hello", "hi ", "hey", "thanks", "thank you"]):
-        return {
-            "reply": "Hello — I am ClinicCare's rule-based health guidance assistant. Ask about departments, common symptoms, or booking. I am not a doctor and cannot diagnose.",
-            "topic": "greeting",
-            "suggestions": suggestions_default,
-        }
+        return {"reply": "Hello — I am ClinicCare's rule-based health guidance assistant. Ask about departments, common symptoms, or booking. I am not a doctor and cannot diagnose.", "topic": "greeting", "suggestions": suggestions_default}
 
-    return {
-        "reply": "I can help with simple questions like which department might fit your situation, general self-care reminders, or how booking works. Try rephrasing, or use the Symptom Checker for a fuller guided flow. For emergencies, call your national emergency number.",
-        "topic": "fallback",
-        "suggestions": suggestions_default,
-    }
+    return {"reply": "I can help with simple questions like which department might fit your situation, general self-care reminders, or how booking works. Try rephrasing, or use the Symptom Checker for a fuller guided flow.", "topic": "fallback", "suggestions": suggestions_default}
 
 
 @app.post("/api/health-chat")

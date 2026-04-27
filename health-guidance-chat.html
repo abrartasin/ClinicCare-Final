@@ -202,7 +202,12 @@
 
   <script>
     (function () {
-      const API_BASE = "https://tasin-gcgt.onrender.com/api";
+      const API_BASE = (() => {
+        if (window.location.protocol === 'file:') return 'http://localhost:3000/api';
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        if (isLocalhost && window.location.port !== '3000') return 'http://localhost:3000/api';
+        return '/api';
+      })();
       const messagesEl = document.getElementById("messages");
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("sendBtn");
@@ -272,7 +277,7 @@
           }
         } catch (_e) {
           appendBubble(
-            "Could not reach the guidance service. Start the ClinicCare backend (python backend/app.py) and try again.",
+            "Could not reach the guidance service. The server may be starting up — please wait 30 seconds and try again.",
             "err"
           );
         } finally {

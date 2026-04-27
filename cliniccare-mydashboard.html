@@ -861,7 +861,12 @@
 
 <script>
   (function () {
-    const API_BASE = "https://tasin-gcgt.onrender.com/api";
+    const API_BASE = (() => {
+      if (window.location.protocol === 'file:') return 'http://localhost:3000/api';
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (isLocalhost && window.location.port !== '3000') return 'http://localhost:3000/api';
+      return '/api';
+    })();
     async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -1157,7 +1162,7 @@
       } catch (_err) {
         riskCard.innerHTML = `
           <div class="quick-head">AI Health Risk Assessment</div>
-          <div style="padding:14px 16px;font-size:13px;color:#64748b;">Backend offline. Start Flask server with <strong>pip install -r requirements.txt && python backend/app.py</strong>.</div>
+          <div style="padding:14px 16px;font-size:13px;color:#64748b;">Could not load risk assessment. The server may be starting up — please refresh in 30 seconds.</div>
         `;
       }
     }
@@ -1201,7 +1206,7 @@
         await loadMyAppointments();
         alert("Appointment cancelled successfully.");
       } catch (_err) {
-        alert("Could not cancel appointment. Please ensure Flask backend is running.");
+        alert("Could not cancel appointment. The server may be starting up — please try again in a moment.");
       }
     }
 
